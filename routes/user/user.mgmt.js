@@ -11,12 +11,14 @@ var sha1 = require('node-sha1');
 var validator = require('validator');
 var validateLib = require('./../util/formValidator');
 var crud = require('./../util/crud.js');
-
+var respMessage = require('../util/responseHandler');
 /**
  * responsible for signing up/ adding up user in the system
  */
 module.exports = {
     signup: function (req, response) {
+        respMessage.resp = response;
+
         /* validating the payload */
         var myobj = {
             fname: req.body.fname,
@@ -40,10 +42,7 @@ module.exports = {
         }
 
         if (!myobj.email) {
-            response.send({
-                status: false,
-                msg: "email id is a mandatory field"
-            });
+            respMessage.fail('Email is a mandatory field');
         }
 
         //save in the database
@@ -51,26 +50,20 @@ module.exports = {
             if (!res) {
 
                 crud.create('user', myobj, myObjFilter).then((data) => {
-                    response.send({
-                        status: true,
-                        msg: '1 row inserted'
-                    });
+                    respMessage.success('1 row inserted');
                 }, (err) => {
-                    console.log(err);
-                    response.send(err);
+                    respMessage.fail(err);
                 });
             } else {
-                response.send(JSON.stringify({
-                    status: false,
-                    msg: "email already exists"
-                }));
+                respMessage.fail('email already exists');
             }
         }, (err) => {
-            console.log(err);
+            respMessage.failDb(response);
         });
     },
 
     login: (req, response) => {
+        respMessage.resp = response;
 
         /* validating the data */
         var myobj = {
@@ -86,26 +79,19 @@ module.exports = {
         //basic checks
         var validatedArr = validateLib.validate(myobj, myObjFilter);
         if (Object.keys(validatedArr).length != 0) {
-            response.send(JSON.stringify({
-                status: false,
-                message: "Enter all information",
-                data: [validatedArr]
-            }));
+            respMessage.failValidation([validatedArr]);
             return;
         }
 
-        var extraCond = `AND passwd = ${myobj.passwd}`;
+        var extraCond = `AND passwd = '${myobj.passwd}'`;
         crud.isExist('user', 'email', myobj.email, extraCond).then((res) => {
             if (res) {
-                response.send(JSON.stringify({
-                    status: true,
-                    msg: 'logged in successful'
-                }));
+                respMessage.success('logged successfully', '');
             } else {
-                response.send("Fail");
+                respMessage.fail("Invalid Credentials");
             }
         }, () => {
-            response.send("Fail");
+            respMessage.failDb();
         });
     }
 }
