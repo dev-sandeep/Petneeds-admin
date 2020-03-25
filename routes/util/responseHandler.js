@@ -3,7 +3,7 @@
  * @author Sandeep G
  * @since 20200325
  */
-
+var common = require('./message');
 module.exports = {
     resp: '',
 
@@ -20,7 +20,7 @@ module.exports = {
         this.resp.send(
             JSON.stringify({
                 status: false,
-                msg: 'DB error, check logs to know more'
+                msg: common.DB_ERROR
             })
         );
     },
@@ -29,7 +29,7 @@ module.exports = {
         this.resp.send(
             JSON.stringify({
                 status: false,
-                msg: 'Validation error',
+                msg: common.VALIDATION_ERROR,
                 data
             })
         );

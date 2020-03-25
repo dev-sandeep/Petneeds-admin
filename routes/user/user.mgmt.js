@@ -5,13 +5,11 @@
  */
 
 //Global variable declaration
-var myobj = {};
-var uniqid = require('uniqid');
-var sha1 = require('node-sha1');
-var validator = require('validator');
 var validateLib = require('./../util/formValidator');
 var crud = require('./../util/crud.js');
-var respMessage = require('../util/responseHandler');
+var respMessage = require('../util/responseHandler');   
+var message = require('./../util/message');
+var common = require('./../util/common');
 /**
  * responsible for signing up/ adding up user in the system
  */
@@ -42,20 +40,20 @@ module.exports = {
         }
 
         if (!myobj.email) {
-            respMessage.fail('Email is a mandatory field');
+            respMessage.fail('Email '+message.MANDATORY_FIELD);
         }
 
         //save in the database
-        crud.isExist('user', 'email', myobj.email).then((res) => {
+        crud.isExist(common.table.USER, 'email', myobj.email).then((res) => {
             if (!res) {
 
                 crud.create('user', myobj, myObjFilter).then((data) => {
-                    respMessage.success('1 row inserted');
+                    respMessage.success(message.ROW_INSERTED);
                 }, (err) => {
                     respMessage.fail(err);
                 });
             } else {
-                respMessage.fail('email already exists');
+                respMessage.fail('email '+message.MANDATORY_FIELD);
             }
         }, (err) => {
             respMessage.failDb(response);
@@ -84,11 +82,18 @@ module.exports = {
         }
 
         var extraCond = `AND passwd = '${myobj.passwd}'`;
-        crud.isExist('user', 'email', myobj.email, extraCond).then((res) => {
+        crud.isExist(common.table.USER, 'email', myobj.email, extraCond).then((res) => {
             if (res) {
-                respMessage.success('logged successfully', '');
+                respMessage.success(message.LOGIN_SUCCESSFULL, '');
+
+                //save the data in user session
+                crud.create(common.table.USER_SESSION, myobj, myObjFilter).then(()=>{
+
+                }, ()=>{
+                    respMessage.failDb();
+                });
             } else {
-                respMessage.fail("Invalid Credentials");
+                respMessage.fail(message.INVALID_CREDENTIALS);
             }
         }, () => {
             respMessage.failDb();
