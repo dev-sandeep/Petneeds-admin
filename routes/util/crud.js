@@ -304,11 +304,11 @@ module.exports = {
         return data;
     },
 
-    isExist: function (tableName, column, value) {
+    isExist: function (tableName, column, value, extraCondition = '') {
         return new Promise(function (resolve, reject) {
             var SQLClient = require('./dbConnection.js');
             var conn = SQLClient.initConnection();
-            var sql = `SELECT * FROM ${tableName} WHERE ${column} = '${value}'`;
+            var sql = `SELECT * FROM ${tableName} WHERE ${column} = '${value}' ${extraCondition}`;
 
             conn.connect((err) => {
                 if (err) {

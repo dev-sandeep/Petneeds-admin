@@ -17,8 +17,8 @@ var bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
 app.post("/signup", userMgmt.signup);
-app.get("/login", userMgmt.login);
-app.get("/", userMgmt.login);
+app.post("/login", userMgmt.login);
+app.post("/", userMgmt.login);
 
 return;
 
