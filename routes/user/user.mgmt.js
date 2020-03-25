@@ -7,15 +7,17 @@
 //Global variable declaration
 var validateLib = require('./../util/formValidator');
 var crud = require('./../util/crud.js');
-var respMessage = require('../util/responseHandler');   
+var responseHandler = require('../util/responseHandler');
 var message = require('./../util/message');
 var common = require('./../util/common');
+var sha1 = require('node-sha1');
+
 /**
  * responsible for signing up/ adding up user in the system
  */
 module.exports = {
     signup: function (req, response) {
-        respMessage.resp = response;
+        var respMessage = new responseHandler(response);
 
         /* validating the payload */
         var myobj = {
@@ -39,9 +41,12 @@ module.exports = {
             country: ['is_empty']
         }
 
-        if (!myobj.email) {
-            respMessage.fail('Email '+message.MANDATORY_FIELD);
+        if (!myobj.email || !myobj.passwd) {
+            respMessage.fail('Email and password' + message.MANDATORY_FIELD);
         }
+
+        //hashing the password
+        myobj.passwd = sha1(myobj.passwd);
 
         //save in the database
         crud.isExist(common.table.USER, 'email', myobj.email).then((res) => {
@@ -53,7 +58,7 @@ module.exports = {
                     respMessage.fail(err);
                 });
             } else {
-                respMessage.fail('email '+message.MANDATORY_FIELD);
+                respMessage.fail('email ' + message.MANDATORY_FIELD);
             }
         }, (err) => {
             respMessage.failDb(response);
@@ -61,7 +66,7 @@ module.exports = {
     },
 
     login: (req, response) => {
-        respMessage.resp = response;
+        var respMessage = new responseHandler(response);
 
         /* validating the data */
         var myobj = {
@@ -81,15 +86,35 @@ module.exports = {
             return;
         }
 
-        var extraCond = `AND passwd = '${myobj.passwd}'`;
-        crud.isExist(common.table.USER, 'email', myobj.email, extraCond).then((res) => {
-            if (res) {
-                respMessage.success(message.LOGIN_SUCCESSFULL, '');
+        var extraCond = `AND passwd = '${sha1(myobj.passwd)}'`;
+        //basic authentication
+        crud.isExist(common.table.USER, 'email', myobj.email, extraCond, true).then((res) => {
+            console.log(res);
+            if (res.length > 0) {
 
                 //save the data in user session
-                crud.create(common.table.USER_SESSION, myobj, myObjFilter).then(()=>{
+                myobj = {
+                    uid: res[0].id,
+                    status: 1,
+                    token: sha1(res[0].id + 'PETNEED' + Date.now())
+                };
 
-                }, ()=>{
+
+                //check if any session is already activated, if yes then de-activate
+                let sql = `UPDATE ${common.table.USER_SESSION}  
+                SET status = 2
+                WHERE (uid IN (SELECT uid FROM ${common.table.USER_SESSION} WHERE uid = ${myobj.uid} AND status = 1))`;
+
+                crud.custom(sql).then(() => {
+                    //insert session logs
+                    crud.create(common.table.USER_SESSION, myobj, false).then(() => {
+                        let userDetail = res[0];
+                        respMessage.success("logged in successful", { ...myobj, userDetail });
+                        return;
+                    }, () => {
+                        respMessage.failDb();
+                    });
+                }, () => {
                     respMessage.failDb();
                 });
             } else {

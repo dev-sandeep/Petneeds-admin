@@ -17,7 +17,7 @@ module.exports = {
 
             //basic checks
             var validatedArr = validateLib.validate(myobj, myObjFilter);
-            
+
             if (Object.keys(validatedArr).length != 0) {
                 reject(JSON.stringify({
                     status: false,
@@ -28,7 +28,7 @@ module.exports = {
             }
 
             var sql = queryCreater.insertQuery(tableName, myobj);
-
+            console.log("SQL:", sql);
             conn.connect((err) => {
                 if (err) throw err;
                 conn.query(sql, (err, result) => {
@@ -304,12 +304,13 @@ module.exports = {
         return data;
     },
 
-    isExist: function (tableName, column, value, extraCondition = '') {
+    isExist: function (tableName, column, value, extraCondition = '', returnEverything) {
         return new Promise(function (resolve, reject) {
             var SQLClient = require('./dbConnection.js');
             var conn = SQLClient.initConnection();
             var sql = `SELECT * FROM ${tableName} WHERE ${column} = '${value}' ${extraCondition}`;
-
+            console.log(sql);
+            
             conn.connect((err) => {
                 if (err) {
                     reject(err);
@@ -320,9 +321,32 @@ module.exports = {
                         reject(err);
                         throw err;
                     }
+                    if (returnEverything)
+                        resolve(result);
 
                     resolve(result.length > 0 ? true : false);
                 });
+            });
+        });
+    },
+
+    custom: function (sql) {
+        return new Promise((resolve, reject) => {
+            var SQLClient = require('./dbConnection.js');
+            var conn = SQLClient.initConnection();
+
+            console.log(sql);
+            conn.connect((err) => {
+                if (err) throw err;
+                conn.query(sql, (err, result) => {
+                    if (err) throw err;
+
+                    console.log("custom sql executed.");
+                    resolve(result);
+                });
+            }, (err) => {
+                console.log("error ocurred while executing");
+                reject(err)
             });
         });
     },

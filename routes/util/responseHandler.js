@@ -4,39 +4,42 @@
  * @since 20200325
  */
 var common = require('./message');
-module.exports = {
-    resp: '',
 
-    fail: (resp, msg) => {
-        this.resp.send(
+class Response {
+    constructor(resp) {
+        this.responseObj = resp;
+    }
+
+    fail(msg) {
+        this.responseObj.send(
             JSON.stringify({
                 status: false,
                 msg
             })
         );
-    },
+    }
 
-    failDb: resp => {
-        this.resp.send(
+    failDb() {
+        this.responseObj.send(
             JSON.stringify({
                 status: false,
                 msg: common.DB_ERROR
             })
         );
-    },
+    }
 
-    failValidation: (resp, data) => {
-        this.resp.send(
+    failValidation(data) {
+        this.responseObj.send(
             JSON.stringify({
                 status: false,
                 msg: common.VALIDATION_ERROR,
                 data
             })
         );
-    },
+    }
 
-    success: (resp, msg, data) => {
-        this.resp.send(
+    success(msg, data) {
+        this.responseObj.send(
             JSON.stringify({
                 status: true,
                 msg,
@@ -44,4 +47,7 @@ module.exports = {
             })
         );
     }
+
 }
+
+module.exports = Response;
