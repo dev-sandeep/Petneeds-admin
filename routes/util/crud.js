@@ -11,12 +11,13 @@ module.exports = {
         return new Promise(function (resolve, reject) {
             var validateLib = require('./formValidator.js');
             var SQLClient = require('./dbConnection.js');
+            var queryCreater = require('./queryCreater.js');
             var url = global.baseUrl;
             var conn = SQLClient.initConnection();
 
             //basic checks
             var validatedArr = validateLib.validate(myobj, myObjFilter);
-            console.log(validatedArr);
+            
             if (Object.keys(validatedArr).length != 0) {
                 reject(JSON.stringify({
                     status: false,
@@ -26,8 +27,7 @@ module.exports = {
                 return;
             }
 
-            var sql = `INSERT INTO ${tableName} (fname, lname, email, phone, passwd, address, country) VALUES 
-            ('${myobj.fname}', '${myobj.lname}', '${myobj.email}', '${myobj.phone}', '${myobj.passwd}', '${myobj.address}', '${myobj.country}')`;
+            var sql = queryCreater.insertQuery(tableName, myobj);
 
             conn.connect((err) => {
                 if (err) throw err;
