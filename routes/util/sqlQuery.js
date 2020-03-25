@@ -1,8 +1,14 @@
 /*
- * To create database query
+ * Responsible for making SQL query dynamically
  * @author Sandeep G
  * @since 20200325
  */
+
+const baseQuery = {
+    insert: {
+
+    }
+}
 
 exports.insertQuery = function (myobj, table) {
     var query = `INSERT INTO ${table} `;

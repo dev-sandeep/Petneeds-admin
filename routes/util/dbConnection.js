@@ -7,7 +7,7 @@
 exports.initConnection = function (req, res) {
     var mysql = require("mysql");
     var con = mysql.createConnection({
-        host: "localhost:8080",
+        host: "localhost",
         user: "root",
         password: "",
         database: "petneed"
